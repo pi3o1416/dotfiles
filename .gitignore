@@ -7,8 +7,6 @@
 !.gitignore
 !.tmux.conf
 !.vimrc
-!./.config/nvim/init.vim
-!./.config/nvim/coc-settings.json
 !.tmux-themepack/
 
 
