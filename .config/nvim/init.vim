@@ -46,10 +46,10 @@ let g:ctrlp_working_path_mode = 'aw'
 
 
 "setup for vim-colors-solarized
-syntax enable
-set background=light
-colorscheme solarized8_high
-let g:solarized_termcolors=256
+"syntax enable
+"set background=light
+"colorscheme solarized8_high
+"let g:solarized_termcolors=256
 
 
 
@@ -62,9 +62,9 @@ let g:solarized_termcolors=256
 
 
 "setup for papercolor
-"set t_Co=256
-"set background=dark
-"colorscheme PaperColor
+set t_Co=256
+set background=dark
+colorscheme PaperColor
 
 
 
