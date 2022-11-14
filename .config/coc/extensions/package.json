@@ -9,7 +9,8 @@
     "coc-pyright": ">=1.1.272",
     "coc-rust-analyzer": ">=0.69.1",
     "coc-snippets": ">=3.1.2",
-    "coc-tsserver": ">=1.11.11"
+    "coc-tsserver": ">=1.11.11",
+    "coc-java": ">=1.5.5"
   },
   "lastUpdate": 1666483474728
 }
