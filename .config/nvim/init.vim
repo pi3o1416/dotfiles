@@ -46,26 +46,28 @@ let g:ctrlp_working_path_mode = 'aw'
 
 
 "setup for vim-colors-solarized
-syntax enable
-set background=light
-colorscheme solarized8_high
-let g:solarized_termcolors=256
+"syntax enable
+"set background=dark
+"colorscheme solarized8_high
+"set t_Co=256
+"let g:solarized_termcolors=256
 
 
 
 "setup for gruvbox
 "syntax enable
-"set background=light
+"set background=dark
 "colorscheme gruvbox
-"let g:gruvbox_contrast_dark  = "light"
+"let g:gruvbox_contrast_dark="hard"
+"let g:gruvbox_contrast_light="hard"
+"let g:gruvbox_improved_warnings=1
 
 
 
 "setup for papercolor
-"set t_Co=256
-"set background=dark
-"colorscheme PaperColor
-
+set t_Co=256
+set background=dark
+colorscheme PaperColor
 
 
 
