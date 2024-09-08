@@ -257,9 +257,24 @@ lspconfig.terraformls.setup {}
 -- require('lint').linters.pylint.cmd = 'python'
 -- require('lint').linters.pylint.args = {'-m', 'pylint', '-f', 'json'}
 -- 
+
+
+-- Function to find pylint executable
+local function get_pylint_path()
+    local venv = os.getenv("VIRTUAL_ENV")
+
+    if venv then
+        return venv .. "/bin/pylint"
+    else
+        return "pylint"
+    end
+end
+
+
 local null_ls = require("null-ls")
 local sources = {
     null_ls.builtins.diagnostics.pylint.with({
+        command = get_pylint_path(),
         filetypes = { "python" },
     }),
     null_ls.builtins.formatting.autopep8.with({
