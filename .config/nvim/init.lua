@@ -46,6 +46,15 @@ require('packer').startup(function(use)
   use 'hrsh7th/nvim-cmp'
   use 'SirVer/ultisnips'
   use 'quangnguyen30192/cmp-nvim-ultisnips'
+  use({
+    "kylechui/nvim-surround",
+    tag = "*", -- Use for stability; omit to use `main` branch for the latest features
+    config = function()
+        require("nvim-surround").setup({
+            -- Configuration here, or leave empty to use defaults
+        })
+    end
+  })
 
   if packer_bootstrap then
     require('packer').sync()
@@ -229,6 +238,7 @@ cmp.setup.cmdline(':', {
 local capabilities = require('cmp_nvim_lsp').default_capabilities()
 local lspconfig = require("lspconfig")
 lspconfig.pyright.setup {}
+lspconfig.gopls.setup{}
 lspconfig.lua_ls.setup {
   settings = {
     Lua = {
@@ -240,6 +250,22 @@ lspconfig.lua_ls.setup {
 }
 lspconfig.ts_ls.setup {}
 lspconfig.terraformls.setup {}
+lspconfig.html.setup {
+  capabilities = require('cmp_nvim_lsp').default_capabilities(),
+  filetypes = { 'html', 'htmldjango' }, -- Add other filetypes if needed
+}
+lspconfig.rust_analyzer.setup({
+  settings = {
+    ["rust-analyzer"] = {
+      cargo = {
+        loadOutDirsFromCheck = true,
+      },
+      procMacro = {
+        enable = true,
+      },
+    },
+  },
+})
 
 -- Set up linter
 -- require('lint').linters_by_ft = {
