@@ -12,6 +12,11 @@ export PS1="\[\033[38;5;189m\]\$(git branch 2> /dev/null | sed -e '/^[^*]/d' -e 
 
 export PATH=$PATH:$HOME/bin:$HOME/go/bin
 
+# Terminal truecolor
+export TERM=xterm-256color
+
+# Python virtual env
+
 activate() {
     current_dir=$(pwd)
     home_dir="$HOME"
@@ -37,3 +42,8 @@ alias ffprobe='ffprobe -hide_banner'
 
 export GO111MODULE=on
 . "$HOME/.cargo/env"
+
+export NVM_DIR="$HOME/.config/nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+

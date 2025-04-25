@@ -1,4 +1,3 @@
--- Linters [clj-kondo, ruby, inko, janet] are absent in the mason's registry. Please, install them manually and remove from configuration.
 -- Initialize packer for managing plugins
 local ensure_packer = function()
   local fn = vim.fn
@@ -16,36 +15,46 @@ local packer_bootstrap = ensure_packer()
 require('packer').startup(function(use)
   use 'nvim-lua/plenary.nvim'
   use 'nvim-treesitter/nvim-treesitter'
-  use 'mfussenegger/nvim-lint'
-  use 'rshkarin/mason-nvim-lint'
-  use 'mfussenegger/nvim-dap'
+
   use 'williamboman/mason.nvim'
   use 'williamboman/mason-lspconfig.nvim'
-  use 'jayp0521/mason-nvim-dap.nvim'
+	use 'neovim/nvim-lspconfig'
+  use 'ray-x/lsp_signature.nvim'
   use 'jose-elias-alvarez/null-ls.nvim'
   use 'jayp0521/mason-null-ls.nvim'
-  use 'ray-x/lsp_signature.nvim'
-  use 'Raimondi/delimitMate'
-  use 'hashivim/vim-terraform'
-  use 'vim-airline/vim-airline'
-  use 'justinj/vim-react-snippets'
-  use 'ctrlpvim/ctrlp.vim'
-  use 'scrooloose/nerdtree'
-  use 'morhetz/gruvbox'
-  use 'rafi/awesome-vim-colorschemes'
+
+  use 'mfussenegger/nvim-lint'
+  use 'rshkarin/mason-nvim-lint'
   use 'neomake/neomake'
-  use 'Yggdroot/indentLine'
-  use 'sheerun/vim-polyglot'
-  use 'jidn/vim-dbml'
-  use 'editorconfig/editorconfig-vim'
-  use 'tpope/vim-fugitive'
-  use 'hrsh7th/cmp-nvim-lsp'
+
+  use 'mfussenegger/nvim-dap'
+  use 'jayp0521/mason-nvim-dap.nvim'
+
+  use 'hrsh7th/nvim-cmp'
+	use 'hrsh7th/cmp-nvim-lsp'
   use 'hrsh7th/cmp-buffer'
   use 'hrsh7th/cmp-path'
   use 'hrsh7th/cmp-cmdline'
-  use 'hrsh7th/nvim-cmp'
+
   use 'SirVer/ultisnips'
   use 'quangnguyen30192/cmp-nvim-ultisnips'
+  use 'justinj/vim-react-snippets'
+
+  use 'ctrlpvim/ctrlp.vim'
+  use 'scrooloose/nerdtree'
+
+  use 'tpope/vim-fugitive'
+
+  use 'hashivim/vim-terraform'
+
+  use 'morhetz/gruvbox'
+  use 'rafi/awesome-vim-colorschemes'
+  use 'jidn/vim-dbml'
+  use 'editorconfig/editorconfig-vim'
+
+  use 'Raimondi/delimitMate'
+  use 'Yggdroot/indentLine'
+  use 'sheerun/vim-polyglot'
   use({
     "kylechui/nvim-surround",
     tag = "*", -- Use for stability; omit to use `main` branch for the latest features
@@ -63,10 +72,9 @@ end)
 
 
 -- Solarized setup in Lua
--- vim.cmd('syntax enable') -- This line is typically not needed in Neovim with Lua
+-- vim.cmd('colorscheme flattened_light')
 -- vim.o.background = "light"
 -- vim.g.solarized_termcolors = 256
--- vim.cmd('colorscheme solarized')
 
 -- Gruvbox setup in Lua
 vim.cmd('syntax enable') -- Ensures syntax highlighting is enabled
@@ -76,7 +84,6 @@ vim.g.gruvbox_contrast_light = "medium"
 vim.cmd('colorscheme gruvbox')
 
 -- PaperColor setup in Lua
--- vim.o.t_Co = 256 -- This is not necessary in Neovim as it handles colors differently
 -- vim.o.background = "dark"
 -- vim.cmd('colorscheme PaperColor')
 
@@ -122,6 +129,7 @@ vim.opt.number = true
 vim.opt.relativenumber = true
 vim.opt.cursorline = true
 vim.opt.guicursor = ""
+vim.opt.termguicolors = true
 
 -- Indentation settings
 vim.opt.shiftwidth = 2
@@ -149,7 +157,7 @@ require("mason").setup({
     }
 })
 require("mason-lspconfig").setup({
-    ensure_installed = { "lua_ls", "pyright", "ts_ls", "ruby", "inko", "clj-kondo", "janet"},
+    ensure_installed = { "lua_ls", "pyright", "ts_ls"},
     automatic_installation = true,
 })
 
@@ -204,17 +212,6 @@ cmp.setup({
   })
 })
 
--- To use git you need to install the plugin petertriho/cmp-git and uncomment lines below
--- Set configuration for specific filetype.
---[[ cmp.setup.filetype('gitcommit', {
-  sources = cmp.config.sources({
-    { name = 'git' },
-  }, {
-    { name = 'buffer' },
-  })
-})
-require("cmp_git").setup() ]]-- 
-
 -- Use buffer source for `/` and `?` (if you enabled `native_menu`, this won't work anymore).
 cmp.setup.cmdline({ '/', '?' }, {
   mapping = cmp.mapping.preset.cmdline(),
@@ -239,16 +236,19 @@ local capabilities = require('cmp_nvim_lsp').default_capabilities()
 local lspconfig = require("lspconfig")
 lspconfig.pyright.setup {}
 lspconfig.gopls.setup{}
-lspconfig.lua_ls.setup {
-  settings = {
-    Lua = {
-      diagnostics = {
-        globals = { 'vim' }
-      }
-    }
-  }
+lspconfig.lua_ls.setup { }
+lspconfig.ts_ls.setup {
+  filetypes = { 'typescript', 'javascript', 'javascriptreact', 'typescriptreact', 'vue' },
+  init_options = {
+    plugins = {
+      {
+        name = '@vue/typescript-plugin',
+        location = vim.fn.stdpath 'data' .. '/mason/packages/vue-language-server/node_modules/@vue/language-server',
+        languages = { 'vue' },
+      },
+    },
+  },
 }
-lspconfig.ts_ls.setup {}
 lspconfig.terraformls.setup {}
 lspconfig.html.setup {
   capabilities = require('cmp_nvim_lsp').default_capabilities(),
@@ -266,23 +266,65 @@ lspconfig.rust_analyzer.setup({
     },
   },
 })
+lspconfig.prismals.setup({
+  capabilities = require("cmp_nvim_lsp").default_capabilities(),
+})
+lspconfig.volar.setup {
+  -- Reference: https://dev.to/danwalsh/solved-vue-3-typescript-inlay-hint-support-in-neovim-53ej
+  init_options = {
+    vue = {
+      hybridMode = false,
+    },
+  },
+  settings = {
+    typescript = {
+      inlayHints = {
+        enumMemberValues = {
+          enabled = true,
+        },
+        functionLikeReturnTypes = {
+          enabled = true,
+        },
+        propertyDeclarationTypes = {
+          enabled = true,
+        },
+        parameterTypes = {
+          enabled = true,
+          suppressWhenArgumentMatchesName = true,
+        },
+        variableTypes = {
+          enabled = true,
+        },
+      },
+    },
+  },
+}
+lspconfig.yamlls.setup {
+  settings = {
+    yaml = {
+      validate = true,
+      completion = true,
+      hover = true,
+    },
+  },
+}
 
 -- Set up linter
--- require('lint').linters_by_ft = {
---   python = {'pylint'}
--- }
--- 
+require('lint').linters_by_ft = {
+  python = {'pylint'}
+}
+
 -- Set running linters on buffer save
--- vim.api.nvim_create_autocmd({"BufWritePost"}, {
---   callback = function()
---     require("lint").try_lint()
---   end,
--- })
--- 
--- -- Set pylint to work in virtualenv
--- require('lint').linters.pylint.cmd = 'python'
--- require('lint').linters.pylint.args = {'-m', 'pylint', '-f', 'json'}
--- 
+vim.api.nvim_create_autocmd({"BufWritePost"}, {
+  callback = function()
+    require("lint").try_lint()
+  end,
+})
+
+-- Set pylint to work in virtualenv
+require('lint').linters.pylint.cmd = 'python'
+require('lint').linters.pylint.args = {'-m', 'pylint', '-f', 'json'}
+ 
 
 
 -- Function to find pylint executable
