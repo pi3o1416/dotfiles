@@ -1,74 +1,75 @@
--- Initialize packer for managing plugins
-local ensure_packer = function()
-  local fn = vim.fn
-  local install_path = fn.stdpath('data')..'/site/pack/packer/start/packer.nvim'
-  if fn.empty(fn.glob(install_path)) > 0 then
-    fn.system({'git', 'clone', '--depth', '1', 'https://github.com/wbthomason/packer.nvim', install_path})
-    vim.cmd [[packadd packer.nvim]]
-    return true
+-- Bootstrap lazy.nvim
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not (vim.uv or vim.loop).fs_stat(lazypath) then
+  local lazyrepo = "https://github.com/folke/lazy.nvim.git"
+  local out = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath })
+  if vim.v.shell_error ~= 0 then
+    vim.api.nvim_echo({
+      { "Failed to clone lazy.nvim:\n", "ErrorMsg" },
+      { out, "WarningMsg" },
+      { "\nPress any key to exit..." },
+    }, true, {})
+    vim.fn.getchar()
+    os.exit(1)
   end
-  return false
 end
+vim.opt.rtp:prepend(lazypath)
 
-local packer_bootstrap = ensure_packer()
+-- Setup lazy.nvim
+require("lazy").setup({
+  "nvim-lua/plenary.nvim",
+  "nvim-treesitter/nvim-treesitter",
 
-require('packer').startup(function(use)
-  use 'nvim-lua/plenary.nvim'
-  use 'nvim-treesitter/nvim-treesitter'
+  "mason-org/mason.nvim",
+  "mason-org/mason-lspconfig.nvim",
+  "neovim/nvim-lspconfig",
+  "ray-x/lsp_signature.nvim",
+  "nvimtools/none-ls.nvim",
+  "jayp0521/mason-null-ls.nvim",
 
-  use 'williamboman/mason.nvim'
-  use 'williamboman/mason-lspconfig.nvim'
-	use 'neovim/nvim-lspconfig'
-  use 'ray-x/lsp_signature.nvim'
-  use 'jose-elias-alvarez/null-ls.nvim'
-  use 'jayp0521/mason-null-ls.nvim'
+  "mfussenegger/nvim-lint",
+  "rshkarin/mason-nvim-lint",
+  "neomake/neomake",
 
-  use 'mfussenegger/nvim-lint'
-  use 'rshkarin/mason-nvim-lint'
-  use 'neomake/neomake'
+  "mfussenegger/nvim-dap",
+  "jayp0521/mason-nvim-dap.nvim",
 
-  use 'mfussenegger/nvim-dap'
-  use 'jayp0521/mason-nvim-dap.nvim'
+  "hrsh7th/nvim-cmp",
+  "hrsh7th/cmp-nvim-lsp",
+  "hrsh7th/cmp-buffer",
+  "hrsh7th/cmp-path",
+  "hrsh7th/cmp-cmdline",
 
-  use 'hrsh7th/nvim-cmp'
-	use 'hrsh7th/cmp-nvim-lsp'
-  use 'hrsh7th/cmp-buffer'
-  use 'hrsh7th/cmp-path'
-  use 'hrsh7th/cmp-cmdline'
+  "SirVer/ultisnips",
+  "quangnguyen30192/cmp-nvim-ultisnips",
+  "justinj/vim-react-snippets",
 
-  use 'SirVer/ultisnips'
-  use 'quangnguyen30192/cmp-nvim-ultisnips'
-  use 'justinj/vim-react-snippets'
+  "ctrlpvim/ctrlp.vim",
+  "nvim-tree/nvim-tree.lua",
+  "nvim-tree/nvim-web-devicons",
 
-  use 'ctrlpvim/ctrlp.vim'
-  use 'scrooloose/nerdtree'
+  "tpope/vim-fugitive",
 
-  use 'tpope/vim-fugitive'
+  "hashivim/vim-terraform",
 
-  use 'hashivim/vim-terraform'
+  "morhetz/gruvbox",
+  "rafi/awesome-vim-colorschemes",
+  "jidn/vim-dbml",
+  "editorconfig/editorconfig-vim",
 
-  use 'morhetz/gruvbox'
-  use 'rafi/awesome-vim-colorschemes'
-  use 'jidn/vim-dbml'
-  use 'editorconfig/editorconfig-vim'
-
-  use 'Raimondi/delimitMate'
-  use 'Yggdroot/indentLine'
-  use 'sheerun/vim-polyglot'
-  use({
+  "Raimondi/delimitMate",
+  "Yggdroot/indentLine",
+  "sheerun/vim-polyglot",
+  {
     "kylechui/nvim-surround",
-    tag = "*", -- Use for stability; omit to use `main` branch for the latest features
+    version = "*",
     config = function()
-        require("nvim-surround").setup({
-            -- Configuration here, or leave empty to use defaults
-        })
+      require("nvim-surround").setup({
+        -- Configuration here, or leave empty to use defaults
+      })
     end
-  })
-
-  if packer_bootstrap then
-    require('packer').sync()
-  end
-end)
+  },
+})
 
 
 -- Solarized setup in Lua
@@ -86,12 +87,6 @@ vim.cmd('colorscheme gruvbox')
 -- PaperColor setup in Lua
 -- vim.o.background = "dark"
 -- vim.cmd('colorscheme PaperColor')
-
--- Diagnostic Signs
-vim.fn.sign_define("DiagnosticSignError", { text = "EE", texthl = "DiagnosticSignError", linehl="", numhl="" })
-vim.fn.sign_define("DiagnosticSignWarn", { text = ">>", texthl = "DiagnosticSignWarn", linehl="", numhl="" })
-vim.fn.sign_define("DiagnosticSignInfo", { text = ">>", texthl = "DiagnosticSignInfo", linehl="", numhl="" })
-vim.fn.sign_define("DiagnosticSignHint", { text = ">>", texthl = "DiagnosticSignHint", linehl="", numhl="" })
 
 -- Highlight Groups
 vim.cmd [[
@@ -116,7 +111,14 @@ vim.diagnostic.config({
     header = "",
     prefix = "",
   },
-  signs = true,
+  signs = {
+    text = {
+      [vim.diagnostic.severity.ERROR] = "EE",
+      [vim.diagnostic.severity.WARN] = ">>",
+      [vim.diagnostic.severity.INFO] = ">>",
+      [vim.diagnostic.severity.HINT] = ">>",
+    }
+  },
   underline = true,
   severity_sort = true,
 })
@@ -232,11 +234,37 @@ cmp.setup.cmdline(':', {
 })
 
 -- Set up lspconfig.
-local capabilities = require('cmp_nvim_lsp').default_capabilities()
 local lspconfig = require("lspconfig")
 lspconfig.pyright.setup {}
 lspconfig.gopls.setup{}
-lspconfig.lua_ls.setup { }
+lspconfig.lua_ls.setup {
+  settings = {
+    Lua = {
+      runtime = {
+        version = 'LuaJIT',
+      },
+      diagnostics = {
+        globals = { 'vim' },
+        disable = { 'missing-fields', 'inject-field', 'undefined-field' },
+      },
+      workspace = {
+        library = vim.api.nvim_get_runtime_file("", true),
+        checkThirdParty = false,
+        maxPreload = 100000,
+        preloadFileSize = 10000,
+      },
+      telemetry = {
+        enable = false,
+      },
+      hint = {
+        enable = true,
+      },
+    },
+  },
+  root_dir = function(fname)
+    return require("lspconfig.util").root_pattern(".luarc.json", ".luarc.jsonc", ".luacheckrc", ".stylua.toml", "stylua.toml", "selene.toml", "selene.yml", ".git")(fname)
+  end,
+}
 lspconfig.ts_ls.setup {
   filetypes = { 'typescript', 'javascript', 'javascriptreact', 'typescriptreact', 'vue' },
   init_options = {
@@ -324,7 +352,6 @@ vim.api.nvim_create_autocmd({"BufWritePost"}, {
 -- Set pylint to work in virtualenv
 require('lint').linters.pylint.cmd = 'python'
 require('lint').linters.pylint.args = {'-m', 'pylint', '-f', 'json'}
- 
 
 
 -- Function to find pylint executable
@@ -345,9 +372,9 @@ local sources = {
         command = get_pylint_path(),
         filetypes = { "python" },
     }),
-    null_ls.builtins.formatting.autopep8.with({
-        filetypes = { "python" },
-    }),
+--    null_ls.builtins.formatting.autopep8.with({
+--        filetypes = { "python" },
+--    }),
 }
 
 null_ls.setup({
@@ -387,15 +414,39 @@ vim.cmd [[
     autocmd filetype htmldjango let b:delimitMate_matchpairs = "(:),[:],<:>"
 ]]
 
--- Setup for NERDTree
-vim.api.nvim_set_keymap('n', '<C-n>', ':NERDTreeToggle<CR>', { noremap = true, silent = true })
-vim.cmd [[
-    autocmd StdinReadPre * let s:std_in=1
-    autocmd VimEnter * if argc() == 1 && isdirectory(argv()[0]) && !exists("s:std_in") | exe 'NERDTree' argv()[0] | wincmd p | ene | exe 'cd '.argv()[0] | endif
-]]
+-- Setup for nvim-tree
+require("nvim-web-devicons").setup({
+  default = true,
+})
+
+require("nvim-tree").setup({
+  view = {
+    width = 30,
+  },
+  renderer = {
+    group_empty = true,
+    icons = {
+      webdev_colors = true,
+      git_placement = "before",
+      padding = " ",
+      symlink_arrow = " ➛ ",
+      show = {
+        file = true,
+        folder = true,
+        folder_arrow = true,
+        git = true,
+      },
+    },
+  },
+  filters = {
+    dotfiles = false,
+  },
+})
+
+vim.api.nvim_set_keymap('n', '<C-n>', ':NvimTreeToggle<CR>', { noremap = true, silent = true })
 
 -- Setup for jsx
-vim.g.jsx_ext_required = 0 
+vim.g.jsx_ext_required = 0
 
 -- Setup for Neomake
 vim.g.neomake_python_enabled_makers = {'flake8'}
