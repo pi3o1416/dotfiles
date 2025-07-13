@@ -17,56 +17,66 @@ vim.opt.rtp:prepend(lazypath)
 
 -- Setup lazy.nvim
 require("lazy").setup({
+  -- Core utilities
   "nvim-lua/plenary.nvim",
   "nvim-treesitter/nvim-treesitter",
 
+  -- LSP and language support
   "mason-org/mason.nvim",
   "mason-org/mason-lspconfig.nvim",
   "neovim/nvim-lspconfig",
   "ray-x/lsp_signature.nvim",
+
+  -- Formatting and diagnostics
   "nvimtools/none-ls.nvim",
   "jayp0521/mason-null-ls.nvim",
-
   "mfussenegger/nvim-lint",
   "rshkarin/mason-nvim-lint",
   "neomake/neomake",
 
+  -- Debugging
   "mfussenegger/nvim-dap",
   "jayp0521/mason-nvim-dap.nvim",
 
+  -- Autocompletion
   "hrsh7th/nvim-cmp",
   "hrsh7th/cmp-nvim-lsp",
   "hrsh7th/cmp-buffer",
   "hrsh7th/cmp-path",
   "hrsh7th/cmp-cmdline",
 
+  -- Snippets
   "SirVer/ultisnips",
   "quangnguyen30192/cmp-nvim-ultisnips",
   "justinj/vim-react-snippets",
 
+  -- File navigation
   "ctrlpvim/ctrlp.vim",
   "nvim-tree/nvim-tree.lua",
   "nvim-tree/nvim-web-devicons",
+  "nvim-telescope/telescope.nvim",
 
+  -- Git integration
   "tpope/vim-fugitive",
 
+  -- Language specific
   "hashivim/vim-terraform",
+  "jidn/vim-dbml",
+  "sheerun/vim-polyglot",
 
+  -- Appearance and themes
   "morhetz/gruvbox",
   "rafi/awesome-vim-colorschemes",
-  "jidn/vim-dbml",
-  "editorconfig/editorconfig-vim",
-
-  "Raimondi/delimitMate",
   "Yggdroot/indentLine",
-  "sheerun/vim-polyglot",
+
+  -- Editor enhancements
+  "editorconfig/editorconfig-vim",
+  "Raimondi/delimitMate",
   {
     "kylechui/nvim-surround",
     version = "*",
     config = function()
-      require("nvim-surround").setup({
-        -- Configuration here, or leave empty to use defaults
-      })
+      require("nvim-surround").setup()
     end
   },
 })
@@ -148,14 +158,29 @@ vim.cmd [[
     autocmd FileType python setlocal ts=4 sw=4 sts=0 expandtab
 ]]
 
--- mason setup
+-- Mason setup with improved UI
 require("mason").setup({
     ui = {
+        check_outdated_packages_on_open = true,
+        border = "rounded",
+        width = 0.8,
+        height = 0.9,
         icons = {
-            package_installed = "â��",
-            package_pending = "â��",
-            package_uninstalled = "â��"
-        }
+            package_installed = "✓",
+            package_pending = "➜",
+            package_uninstalled = "✗"
+        },
+        keymaps = {
+            toggle_package_expand = "<CR>",
+            install_package = "i",
+            update_package = "u",
+            check_package_version = "c",
+            update_all_packages = "U",
+            check_outdated_packages = "C",
+            uninstall_package = "X",
+            cancel_installation = "<C-c>",
+            apply_language_filter = "<C-f>",
+        },
     }
 })
 require("mason-lspconfig").setup({
@@ -170,7 +195,7 @@ require("mason-nvim-dap").setup({
 
 require("mason-nvim-lint").setup({
     ensure_installed = { },
-    autoatic_installation = true,
+    automatic_installation = true,
 })
 
 require("mason-null-ls").setup({
@@ -233,16 +258,26 @@ cmp.setup.cmdline(':', {
   matching = { disallow_symbol_nonprefix_matching = false }
 })
 
--- Set up lspconfig.
+-- Set up LSP configuration
 local lspconfig = require("lspconfig")
-lspconfig.pyright.setup {}
-lspconfig.gopls.setup{}
+local capabilities = require("cmp_nvim_lsp").default_capabilities()
+
+-- Python
+lspconfig.pyright.setup {
+  capabilities = capabilities,
+}
+
+-- Go
+lspconfig.gopls.setup {
+  capabilities = capabilities,
+}
+
+-- Lua
 lspconfig.lua_ls.setup {
+  capabilities = capabilities,
   settings = {
     Lua = {
-      runtime = {
-        version = 'LuaJIT',
-      },
+      runtime = { version = 'LuaJIT' },
       diagnostics = {
         globals = { 'vim' },
         disable = { 'missing-fields', 'inject-field', 'undefined-field' },
@@ -253,19 +288,22 @@ lspconfig.lua_ls.setup {
         maxPreload = 100000,
         preloadFileSize = 10000,
       },
-      telemetry = {
-        enable = false,
-      },
-      hint = {
-        enable = true,
-      },
+      telemetry = { enable = false },
+      hint = { enable = true },
     },
   },
   root_dir = function(fname)
-    return require("lspconfig.util").root_pattern(".luarc.json", ".luarc.jsonc", ".luacheckrc", ".stylua.toml", "stylua.toml", "selene.toml", "selene.yml", ".git")(fname)
+    return require("lspconfig.util").root_pattern(
+      ".luarc.json", ".luarc.jsonc", ".luacheckrc",
+      ".stylua.toml", "stylua.toml", "selene.toml",
+      "selene.yml", ".git"
+    )(fname)
   end,
 }
+
+-- TypeScript/JavaScript
 lspconfig.ts_ls.setup {
+  capabilities = capabilities,
   filetypes = { 'typescript', 'javascript', 'javascriptreact', 'typescriptreact', 'vue' },
   init_options = {
     plugins = {
@@ -277,57 +315,59 @@ lspconfig.ts_ls.setup {
     },
   },
 }
-lspconfig.terraformls.setup {}
-lspconfig.html.setup {
-  capabilities = require('cmp_nvim_lsp').default_capabilities(),
-  filetypes = { 'html', 'htmldjango' }, -- Add other filetypes if needed
+
+-- Terraform
+lspconfig.terraformls.setup {
+  capabilities = capabilities,
 }
-lspconfig.rust_analyzer.setup({
+
+-- HTML
+lspconfig.html.setup {
+  capabilities = capabilities,
+  filetypes = { 'html', 'htmldjango' },
+}
+
+-- Rust
+lspconfig.rust_analyzer.setup {
+  capabilities = capabilities,
   settings = {
     ["rust-analyzer"] = {
-      cargo = {
-        loadOutDirsFromCheck = true,
-      },
-      procMacro = {
-        enable = true,
-      },
+      cargo = { loadOutDirsFromCheck = true },
+      procMacro = { enable = true },
     },
   },
-})
-lspconfig.prismals.setup({
-  capabilities = require("cmp_nvim_lsp").default_capabilities(),
-})
+}
+
+-- Prisma
+lspconfig.prismals.setup {
+  capabilities = capabilities,
+}
+
+-- Vue
 lspconfig.volar.setup {
-  -- Reference: https://dev.to/danwalsh/solved-vue-3-typescript-inlay-hint-support-in-neovim-53ej
+  capabilities = capabilities,
   init_options = {
-    vue = {
-      hybridMode = false,
-    },
+    vue = { hybridMode = false },
   },
   settings = {
     typescript = {
       inlayHints = {
-        enumMemberValues = {
-          enabled = true,
-        },
-        functionLikeReturnTypes = {
-          enabled = true,
-        },
-        propertyDeclarationTypes = {
-          enabled = true,
-        },
+        enumMemberValues = { enabled = true },
+        functionLikeReturnTypes = { enabled = true },
+        propertyDeclarationTypes = { enabled = true },
         parameterTypes = {
           enabled = true,
           suppressWhenArgumentMatchesName = true,
         },
-        variableTypes = {
-          enabled = true,
-        },
+        variableTypes = { enabled = true },
       },
     },
   },
 }
+
+-- YAML
 lspconfig.yamlls.setup {
+  capabilities = capabilities,
   settings = {
     yaml = {
       validate = true,
@@ -441,7 +481,68 @@ require("nvim-tree").setup({
   filters = {
     dotfiles = false,
   },
+  on_attach = function(bufnr)
+    local api = require("nvim-tree.api")
+    
+    -- Default mappings
+    api.config.mappings.default_on_attach(bufnr)
+    
+    -- Custom mappings
+    local function opts(desc)
+      return { desc = "nvim-tree: " .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true }
+    end
+    
+    -- Open in new tab and switch to it (default <C-t> behavior)
+    vim.keymap.set('n', '<C-t>', api.node.open.tab, opts('Open: New Tab'))
+    
+    -- Open in new tab but stay in nvim-tree
+    vim.keymap.set('n', 'T', function()
+      api.node.open.tab()
+      vim.cmd('tabprevious')  -- Go back to previous tab (nvim-tree)
+    end, opts('Open: New Tab (Stay)'))
+  end,
 })
+
+-- Telescope setup
+require("telescope").setup({
+  defaults = {
+    file_ignore_patterns = {
+      -- Dependencies & package managers
+      "node_modules",
+      "venv", ".venv", "env", ".env",
+      "vendor/",
+      "__pycache__/",
+      "target/",
+      
+      -- Version control
+      ".git/", ".svn/", ".hg/",
+      
+      -- Build outputs
+      "dist/", "build/", "out/",
+      "%.min%.js", "%.min%.css",
+      
+      -- IDE/Editor
+      ".vscode/", ".idea/", ".vs/",
+      
+      -- OS files
+      ".DS_Store", "Thumbs.db", "desktop.ini",
+      
+      -- Logs & temporary
+      "%.log", "%.tmp", "%.cache",
+      ".coverage", "coverage/", ".nyc_output/",
+      
+      -- Compiled files
+      "%.o", "%.so", "%.dll", "%.class", "%.pyc",
+    },
+  }
+})
+
+-- Telescope keybindings
+local telescope_opts = { noremap = true, silent = true }
+vim.api.nvim_set_keymap('n', '<leader>ff', ':Telescope find_files<CR>', telescope_opts)  -- Find files
+vim.api.nvim_set_keymap('n', '<leader>fg', ':Telescope live_grep<CR>', telescope_opts)   -- Search in files
+vim.api.nvim_set_keymap('n', '<leader>fb', ':Telescope buffers<CR>', telescope_opts)     -- Find buffers
+vim.api.nvim_set_keymap('n', '<leader>fh', ':Telescope help_tags<CR>', telescope_opts)   -- Find help
 
 vim.api.nvim_set_keymap('n', '<C-n>', ':NvimTreeToggle<CR>', { noremap = true, silent = true })
 
@@ -451,17 +552,33 @@ vim.g.jsx_ext_required = 0
 -- Setup for Neomake
 vim.g.neomake_python_enabled_makers = {'flake8'}
 
--- My keybindings
-vim.api.nvim_set_keymap('n', '<F3>', ':noh<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-l>', ':tabnext<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-h>', ':tabprevious<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>ev', ':vsplit $MYVIMRC<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>sv', ':source $MYVIMRC<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>j', ':+10<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>k', ':-10<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>sc', ':Neomake<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>n', ':lnext<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>m', ':lprev<CR>', { noremap = true, silent = true })
+-- Keybindings
+local opts = { noremap = true, silent = true }
+
+-- General navigation
+vim.api.nvim_set_keymap('n', '<F3>', ':noh<CR>', opts)  -- Clear search highlights
+vim.api.nvim_set_keymap('n', '<C-l>', ':tabnext<CR>', opts)  -- Next tab
+vim.api.nvim_set_keymap('n', '<C-h>', ':tabprevious<CR>', opts)  -- Previous tab
+vim.api.nvim_set_keymap('n', '<F6>', ':silent !clear <Enter>', opts)  -- Clear terminal
+
+-- Quick movement
+vim.api.nvim_set_keymap('n', '<leader>j', ':+10<CR>', opts)  -- Jump down 10 lines
+vim.api.nvim_set_keymap('n', '<leader>k', ':-10<CR>', opts)  -- Jump up 10 lines
+
+-- Configuration management
+vim.api.nvim_set_keymap('n', '<leader>ev', ':vsplit $MYVIMRC<CR>', opts)  -- Edit init.lua
+vim.api.nvim_set_keymap('n', '<leader>sv', ':source $MYVIMRC<CR>', opts)  -- Reload config
+
+-- LSP and diagnostics
+vim.api.nvim_set_keymap('n', '<leader><C-f>', ':lua vim.lsp.buf.format({ async = true })<CR>', opts)  -- Format code
+vim.api.nvim_set_keymap('n', '<leader>n', ':lnext<CR>', opts)  -- Next diagnostic
+vim.api.nvim_set_keymap('n', '<leader>m', ':lprev<CR>', opts)  -- Previous diagnostic
+
+-- Linting and checking
+vim.api.nvim_set_keymap('n', '<leader>sc', ':Neomake<CR>', opts)  -- Run syntax check
+
+-- File tree
+vim.api.nvim_set_keymap('n', '<C-n>', ':NvimTreeToggle<CR>', opts)  -- Toggle file tree
 
 -- Filetype specific keybindings
 --vim.cmd [[
@@ -475,7 +592,6 @@ vim.api.nvim_set_keymap('n', '<leader>m', ':lprev<CR>', { noremap = true, silent
 --    autocmd filetype dart nnoremap <F9> :w <bar>!dart %<CR>
 --]]
 
-vim.api.nvim_set_keymap('n', '<F6>', ':silent !clear <Enter>', { noremap = true, silent = true })
 
 -- Terraform settings
 vim.cmd [[
@@ -490,7 +606,7 @@ vim.g.terraform_fmt_on_save = 1
 vim.g.terraform_align = 1
 
 -- Terraform keybindings
-vim.api.nvim_set_keymap('n', '<leader>ti', ':!terraform init<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>tv', ':!terraform validate<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>tp', ':!terraform plan<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>taa', ':!terraform apply -auto-approve<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>ti', ':!terraform init<CR>', opts)  -- Terraform init
+vim.api.nvim_set_keymap('n', '<leader>tv', ':!terraform validate<CR>', opts)  -- Terraform validate
+vim.api.nvim_set_keymap('n', '<leader>tp', ':!terraform plan<CR>', opts)  -- Terraform plan
+vim.api.nvim_set_keymap('n', '<leader>taa', ':!terraform apply -auto-approve<CR>', opts)  -- Terraform apply
