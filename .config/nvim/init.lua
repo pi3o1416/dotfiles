@@ -79,6 +79,31 @@ require("lazy").setup({
       require("nvim-surround").setup()
     end
   },
+
+  -- AI Assistant
+  {
+    "yetone/avante.nvim",
+    build = function()
+      if vim.fn.has("win32") == 1 then
+        return "powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false"
+      else
+        return "make"
+      end
+    end,
+    event = "VeryLazy",
+    version = false,
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      "MunifTanjim/nui.nvim",
+      "echasnovski/mini.pick",
+      "ibhagwan/fzf-lua",
+      "stevearc/dressing.nvim",
+      "folke/snacks.nvim",
+      "zbirenbaum/copilot.lua",
+      "HakonHarnes/img-clip.nvim",
+      "MeanderingProgrammer/render-markdown.nvim",
+    },
+  },
 })
 
 
@@ -483,18 +508,18 @@ require("nvim-tree").setup({
   },
   on_attach = function(bufnr)
     local api = require("nvim-tree.api")
-    
+
     -- Default mappings
     api.config.mappings.default_on_attach(bufnr)
-    
+
     -- Custom mappings
     local function opts(desc)
       return { desc = "nvim-tree: " .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true }
     end
-    
+
     -- Open in new tab and switch to it (default <C-t> behavior)
     vim.keymap.set('n', '<C-t>', api.node.open.tab, opts('Open: New Tab'))
-    
+
     -- Open in new tab but stay in nvim-tree
     vim.keymap.set('n', 'T', function()
       api.node.open.tab()
@@ -513,24 +538,24 @@ require("telescope").setup({
       "vendor/",
       "__pycache__/",
       "target/",
-      
+
       -- Version control
       ".git/", ".svn/", ".hg/",
-      
+
       -- Build outputs
       "dist/", "build/", "out/",
       "%.min%.js", "%.min%.css",
-      
+
       -- IDE/Editor
       ".vscode/", ".idea/", ".vs/",
-      
+
       -- OS files
       ".DS_Store", "Thumbs.db", "desktop.ini",
-      
+
       -- Logs & temporary
       "%.log", "%.tmp", "%.cache",
       ".coverage", "coverage/", ".nyc_output/",
-      
+
       -- Compiled files
       "%.o", "%.so", "%.dll", "%.class", "%.pyc",
     },
@@ -543,6 +568,22 @@ vim.api.nvim_set_keymap('n', '<leader>ff', ':Telescope find_files<CR>', telescop
 vim.api.nvim_set_keymap('n', '<leader>fg', ':Telescope live_grep<CR>', telescope_opts)   -- Search in files
 vim.api.nvim_set_keymap('n', '<leader>fb', ':Telescope buffers<CR>', telescope_opts)     -- Find buffers
 vim.api.nvim_set_keymap('n', '<leader>fh', ':Telescope help_tags<CR>', telescope_opts)   -- Find help
+
+-- Avante setup
+require("avante").setup({
+  provider = "claude",
+  providers = {
+    claude = {
+      endpoint = "https://api.anthropic.com",
+      model = "claude-sonnet-4-20250514",
+      timeout = 30000,
+      extra_request_body = {
+        temperature = 0.75,
+        max_tokens = 20480,
+      },
+    },
+  },
+})
 
 vim.api.nvim_set_keymap('n', '<C-n>', ':NvimTreeToggle<CR>', { noremap = true, silent = true })
 
