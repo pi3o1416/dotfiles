@@ -108,16 +108,16 @@ require("lazy").setup({
 
 
 -- Solarized setup in Lua
--- vim.cmd('colorscheme flattened_light')
--- vim.o.background = "light"
--- vim.g.solarized_termcolors = 256
+vim.o.background = "dark"
+vim.g.solarized_termcolors = 256
+vim.cmd('colorscheme solarized8')
 
 -- Gruvbox setup in Lua
-vim.cmd('syntax enable') -- Ensures syntax highlighting is enabled
-vim.o.background = "light"
-vim.g.gruvbox_contrast_dark = "soft"
-vim.g.gruvbox_contrast_light = "medium"
-vim.cmd('colorscheme gruvbox')
+-- vim.cmd('syntax enable') -- Ensures syntax highlighting is enabled
+-- vim.o.background = "dark"
+-- vim.g.gruvbox_contrast_dark = "soft"
+-- vim.g.gruvbox_contrast_light = "medium"
+-- vim.cmd('colorscheme gruvbox')
 
 -- PaperColor setup in Lua
 -- vim.o.background = "dark"
@@ -172,6 +172,7 @@ vim.opt.termguicolors = true
 vim.opt.shiftwidth = 2
 vim.opt.softtabstop = 2
 vim.opt.tabstop = 2
+vim.opt.expandtab = true
 
 -- Filetype specific indentation
 vim.cmd [[
@@ -595,6 +596,9 @@ vim.g.neomake_python_enabled_makers = {'flake8'}
 
 -- Keybindings
 local opts = { noremap = true, silent = true }
+
+-- Fix Tab behavior 
+vim.api.nvim_set_keymap('i', '<Tab>', '<C-t>', opts)
 
 -- General navigation
 vim.api.nvim_set_keymap('n', '<F3>', ':noh<CR>', opts)  -- Clear search highlights
