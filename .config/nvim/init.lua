@@ -46,9 +46,9 @@ require("lazy").setup({
   "hrsh7th/cmp-cmdline",
 
   -- Snippets
-  "SirVer/ultisnips",
-  "quangnguyen30192/cmp-nvim-ultisnips",
-  "justinj/vim-react-snippets",
+  "L3MON4D3/LuaSnip",
+  "saadparwaiz1/cmp_luasnip",
+  "rafamadriz/friendly-snippets",
 
   -- File navigation
   "ctrlpvim/ctrlp.vim",
@@ -98,7 +98,19 @@ require("lazy").setup({
       "echasnovski/mini.pick",
       "ibhagwan/fzf-lua",
       "stevearc/dressing.nvim",
-      "folke/snacks.nvim",
+      {
+        "folke/snacks.nvim",
+        priority = 1000,
+        lazy = false,
+        opts = {
+          bigfile = { enabled = true },
+          dashboard = { enabled = true },
+          notifier = { enabled = true },
+          quickfile = { enabled = true },
+          statuscolumn = { enabled = true },
+          words = { enabled = true },
+        },
+      },
       "zbirenbaum/copilot.lua",
       "HakonHarnes/img-clip.nvim",
       "MeanderingProgrammer/render-markdown.nvim",
@@ -159,7 +171,7 @@ vim.diagnostic.config({
 })
 
 -- Custom settings
-vim.g.python3_host_prog = "/usr/bin/python"
+vim.g.python3_host_prog = "/opt/homebrew/bin/python3"
 vim.g.mapleader = ","
 vim.opt.compatible = false
 vim.opt.number = true
@@ -236,11 +248,7 @@ cmp.setup({
   snippet = {
     -- REQUIRED - you must specify a snippet engine
     expand = function(args)
-      -- vim.fn["vsnip#anonymous"](args.body) -- For `vsnip` users.
-      -- require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
-      -- require('snippy').expand_snippet(args.body) -- For `snippy` users.
-      vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
-      -- vim.snippet.expand(args.body) -- For native neovim snippets (Neovim v0.10+)
+      require('luasnip').lsp_expand(args.body)
     end,
   },
   window = {
@@ -256,10 +264,7 @@ cmp.setup({
   }),
   sources = cmp.config.sources({
     { name = 'nvim_lsp' },
-    -- { name = 'vsnip' }, -- For vsnip users.
-    -- { name = 'luasnip' }, -- For luasnip users.
-    { name = 'ultisnips' }, -- For ultisnips users.
-    -- { name = 'snippy' }, -- For snippy users.
+    { name = 'luasnip' },
   }, {
     { name = 'buffer' },
   })
@@ -285,21 +290,16 @@ cmp.setup.cmdline(':', {
 })
 
 -- Set up LSP configuration
-local lspconfig = require("lspconfig")
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
 -- Python
-lspconfig.pyright.setup {
-  capabilities = capabilities,
-}
+vim.lsp.enable('pyright')
 
 -- Go
-lspconfig.gopls.setup {
-  capabilities = capabilities,
-}
+vim.lsp.enable('gopls')
 
 -- Lua
-lspconfig.lua_ls.setup {
+vim.lsp.config('lua_ls', {
   capabilities = capabilities,
   settings = {
     Lua = {
@@ -319,16 +319,17 @@ lspconfig.lua_ls.setup {
     },
   },
   root_dir = function(fname)
-    return require("lspconfig.util").root_pattern(
+    return vim.fs.root(fname, {
       ".luarc.json", ".luarc.jsonc", ".luacheckrc",
       ".stylua.toml", "stylua.toml", "selene.toml",
       "selene.yml", ".git"
-    )(fname)
+    })
   end,
-}
+})
+
 
 -- TypeScript/JavaScript
-lspconfig.ts_ls.setup {
+vim.lsp.config('ts_ls', {
   capabilities = capabilities,
   filetypes = { 'typescript', 'javascript', 'javascriptreact', 'typescriptreact', 'vue' },
   init_options = {
@@ -340,21 +341,21 @@ lspconfig.ts_ls.setup {
       },
     },
   },
-}
+})
 
 -- Terraform
-lspconfig.terraformls.setup {
+vim.lsp.config('terraformls', {
   capabilities = capabilities,
-}
+})
 
 -- HTML
-lspconfig.html.setup {
+vim.lsp.config('html', {
   capabilities = capabilities,
   filetypes = { 'html', 'htmldjango' },
-}
+})
 
 -- Rust
-lspconfig.rust_analyzer.setup {
+vim.lsp.config('rust_analyzer', {
   capabilities = capabilities,
   settings = {
     ["rust-analyzer"] = {
@@ -362,15 +363,15 @@ lspconfig.rust_analyzer.setup {
       procMacro = { enable = true },
     },
   },
-}
+})
 
 -- Prisma
-lspconfig.prismals.setup {
+vim.lsp.config('prismals', {
   capabilities = capabilities,
-}
+})
 
 -- Vue
-lspconfig.volar.setup {
+vim.lsp.config('volar', {
   capabilities = capabilities,
   init_options = {
     vue = { hybridMode = false },
@@ -389,10 +390,10 @@ lspconfig.volar.setup {
       },
     },
   },
-}
+})
 
 -- YAML
-lspconfig.yamlls.setup {
+vim.lsp.config('yamlls', {
   capabilities = capabilities,
   settings = {
     yaml = {
@@ -401,7 +402,7 @@ lspconfig.yamlls.setup {
       hover = true,
     },
   },
-}
+})
 
 -- Set up linter
 require('lint').linters_by_ft = {
@@ -417,6 +418,7 @@ vim.api.nvim_create_autocmd({"BufWritePost"}, {
 
 -- Set pylint to work in virtualenv
 require('lint').linters.pylint.cmd = 'python'
+require('lint').linters.oxlint.cmd = 'typescript'
 require('lint').linters.pylint.args = {'-m', 'pylint', '-f', 'json'}
 
 
@@ -467,11 +469,8 @@ vim.g.ctrlp_working_path_mode = 'aw'
 -- Setup for editorconfig
 vim.g.EditorConfig_exclude_patterns = {'fugitive://.*', 'scp://.*'}
 
--- Setup for ultisnips
-vim.g.UltiSnipsExpandTrigger = "<c-s>"
-vim.g.UltiSnipsJumpForwardTrigger = "<c-j>"
-vim.g.UltiSnipsJumpBackwardTrigger = "<c-k>"
-vim.g.UltiSnipsListSnippets = "<c-?>"
+-- Setup for luasnip
+require("luasnip.loaders.from_vscode").lazy_load()
 
 -- Setup for delimitMate
 vim.g.delimitMate_expand_space = 1
