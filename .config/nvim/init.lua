@@ -28,11 +28,8 @@ require("lazy").setup({
   "ray-x/lsp_signature.nvim",
 
   -- Formatting and diagnostics
-  "nvimtools/none-ls.nvim",
-  "jayp0521/mason-null-ls.nvim",
   "mfussenegger/nvim-lint",
   "rshkarin/mason-nvim-lint",
-  "neomake/neomake",
 
   -- Debugging
   "mfussenegger/nvim-dap",
@@ -45,11 +42,6 @@ require("lazy").setup({
   "hrsh7th/cmp-path",
   "hrsh7th/cmp-cmdline",
 
-  -- Snippets
-  "SirVer/ultisnips",
-  "quangnguyen30192/cmp-nvim-ultisnips",
-  "justinj/vim-react-snippets",
-
   -- File navigation
   "ctrlpvim/ctrlp.vim",
   "nvim-tree/nvim-tree.lua",
@@ -58,11 +50,6 @@ require("lazy").setup({
 
   -- Git integration
   "tpope/vim-fugitive",
-
-  -- Language specific
-  "hashivim/vim-terraform",
-  "jidn/vim-dbml",
-  "sheerun/vim-polyglot",
 
   -- Appearance and themes
   "morhetz/gruvbox",
@@ -78,31 +65,6 @@ require("lazy").setup({
     config = function()
       require("nvim-surround").setup()
     end
-  },
-
-  -- AI Assistant
-  {
-    "yetone/avante.nvim",
-    build = function()
-      if vim.fn.has("win32") == 1 then
-        return "powershell -ExecutionPolicy Bypass -File Build.ps1 -BuildFromSource false"
-      else
-        return "make"
-      end
-    end,
-    event = "VeryLazy",
-    version = false,
-    dependencies = {
-      "nvim-lua/plenary.nvim",
-      "MunifTanjim/nui.nvim",
-      "echasnovski/mini.pick",
-      "ibhagwan/fzf-lua",
-      "stevearc/dressing.nvim",
-      "folke/snacks.nvim",
-      "zbirenbaum/copilot.lua",
-      "HakonHarnes/img-clip.nvim",
-      "MeanderingProgrammer/render-markdown.nvim",
-    },
   },
 })
 
@@ -224,25 +186,10 @@ require("mason-nvim-lint").setup({
     automatic_installation = true,
 })
 
-require("mason-null-ls").setup({
-    ensure_installed = { "prettier" },
-    automatic_installation = true,
-})
-
 -- Set up nvim-cmp.
 local cmp = require'cmp'
 
 cmp.setup({
-  snippet = {
-    -- REQUIRED - you must specify a snippet engine
-    expand = function(args)
-      -- vim.fn["vsnip#anonymous"](args.body) -- For `vsnip` users.
-      -- require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
-      -- require('snippy').expand_snippet(args.body) -- For `snippy` users.
-      vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
-      -- vim.snippet.expand(args.body) -- For native neovim snippets (Neovim v0.10+)
-    end,
-  },
   window = {
     -- completion = cmp.config.window.bordered(),
     -- documentation = cmp.config.window.bordered(),
@@ -256,10 +203,6 @@ cmp.setup({
   }),
   sources = cmp.config.sources({
     { name = 'nvim_lsp' },
-    -- { name = 'vsnip' }, -- For vsnip users.
-    -- { name = 'luasnip' }, -- For luasnip users.
-    { name = 'ultisnips' }, -- For ultisnips users.
-    -- { name = 'snippy' }, -- For snippy users.
   }, {
     { name = 'buffer' },
   })
@@ -288,120 +231,28 @@ cmp.setup.cmdline(':', {
 local lspconfig = require("lspconfig")
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
--- Python
-lspconfig.pyright.setup {
-  capabilities = capabilities,
+-- Add config directory to Lua path
+local config_dir = vim.fn.stdpath("config")
+package.path = package.path .. ";" .. config_dir .. "/?.lua"
+
+-- Load LSP configs from separate files
+local lsp_servers = {
+  'pyright',
+  'gopls',
+  'lua_ls',
+  'ts_ls',
+  'terraformls',
+  'html',
+  'rust_analyzer',
+  'prismals',
+  'volar',
+  'yamlls'
 }
 
--- Go
-lspconfig.gopls.setup {
-  capabilities = capabilities,
-}
-
--- Lua
-lspconfig.lua_ls.setup {
-  capabilities = capabilities,
-  settings = {
-    Lua = {
-      runtime = { version = 'LuaJIT' },
-      diagnostics = {
-        globals = { 'vim' },
-        disable = { 'missing-fields', 'inject-field', 'undefined-field' },
-      },
-      workspace = {
-        library = vim.api.nvim_get_runtime_file("", true),
-        checkThirdParty = false,
-        maxPreload = 100000,
-        preloadFileSize = 10000,
-      },
-      telemetry = { enable = false },
-      hint = { enable = true },
-    },
-  },
-  root_dir = function(fname)
-    return require("lspconfig.util").root_pattern(
-      ".luarc.json", ".luarc.jsonc", ".luacheckrc",
-      ".stylua.toml", "stylua.toml", "selene.toml",
-      "selene.yml", ".git"
-    )(fname)
-  end,
-}
-
--- TypeScript/JavaScript
-lspconfig.ts_ls.setup {
-  capabilities = capabilities,
-  filetypes = { 'typescript', 'javascript', 'javascriptreact', 'typescriptreact', 'vue' },
-  init_options = {
-    plugins = {
-      {
-        name = '@vue/typescript-plugin',
-        location = vim.fn.stdpath 'data' .. '/mason/packages/vue-language-server/node_modules/@vue/language-server',
-        languages = { 'vue' },
-      },
-    },
-  },
-}
-
--- Terraform
-lspconfig.terraformls.setup {
-  capabilities = capabilities,
-}
-
--- HTML
-lspconfig.html.setup {
-  capabilities = capabilities,
-  filetypes = { 'html', 'htmldjango' },
-}
-
--- Rust
-lspconfig.rust_analyzer.setup {
-  capabilities = capabilities,
-  settings = {
-    ["rust-analyzer"] = {
-      cargo = { loadOutDirsFromCheck = true },
-      procMacro = { enable = true },
-    },
-  },
-}
-
--- Prisma
-lspconfig.prismals.setup {
-  capabilities = capabilities,
-}
-
--- Vue
-lspconfig.volar.setup {
-  capabilities = capabilities,
-  init_options = {
-    vue = { hybridMode = false },
-  },
-  settings = {
-    typescript = {
-      inlayHints = {
-        enumMemberValues = { enabled = true },
-        functionLikeReturnTypes = { enabled = true },
-        propertyDeclarationTypes = { enabled = true },
-        parameterTypes = {
-          enabled = true,
-          suppressWhenArgumentMatchesName = true,
-        },
-        variableTypes = { enabled = true },
-      },
-    },
-  },
-}
-
--- YAML
-lspconfig.yamlls.setup {
-  capabilities = capabilities,
-  settings = {
-    yaml = {
-      validate = true,
-      completion = true,
-      hover = true,
-    },
-  },
-}
+for _, server in ipairs(lsp_servers) do
+  local config = require('lsp.' .. server)
+  config(lspconfig, capabilities)
+end
 
 -- Set up linter
 require('lint').linters_by_ft = {
@@ -424,38 +275,6 @@ vim.api.nvim_create_autocmd({"BufWritePost"}, {
 require('lint').linters.pylint.cmd = 'python'
 require('lint').linters.pylint.args = {'-m', 'pylint', '-f', 'json'}
 
-
--- Function to find pylint executable
-local function get_pylint_path()
-    local venv = os.getenv("VIRTUAL_ENV")
-
-    if venv then
-        return venv .. "/bin/pylint"
-    else
-        return "pylint"
-    end
-end
-
-
-local null_ls = require("null-ls")
-local sources = {
-    null_ls.builtins.diagnostics.pylint.with({
-        command = get_pylint_path(),
-        filetypes = { "python" },
-    }),
---    null_ls.builtins.formatting.autopep8.with({
---        filetypes = { "python" },
---    }),
-}
-
-null_ls.setup({
-    sources = sources,
-})
-
-
--- Set up formatter
-vim.api.nvim_set_keymap('n', '<leader><C-f>', ':lua vim.lsp.buf.format({ async = true })<CR>', { noremap = true, silent = true })
-
 -- Setup lsp signature
 
 require'lsp_signature'.setup({
@@ -471,12 +290,6 @@ vim.g.ctrlp_working_path_mode = 'aw'
 
 -- Setup for editorconfig
 vim.g.EditorConfig_exclude_patterns = {'fugitive://.*', 'scp://.*'}
-
--- Setup for ultisnips
-vim.g.UltiSnipsExpandTrigger = "<c-s>"
-vim.g.UltiSnipsJumpForwardTrigger = "<c-j>"
-vim.g.UltiSnipsJumpBackwardTrigger = "<c-k>"
-vim.g.UltiSnipsListSnippets = "<c-?>"
 
 -- Setup for delimitMate
 vim.g.delimitMate_expand_space = 1
@@ -575,29 +388,8 @@ vim.api.nvim_set_keymap('n', '<leader>fg', ':Telescope live_grep<CR>', telescope
 vim.api.nvim_set_keymap('n', '<leader>fb', ':Telescope buffers<CR>', telescope_opts)     -- Find buffers
 vim.api.nvim_set_keymap('n', '<leader>fh', ':Telescope help_tags<CR>', telescope_opts)   -- Find help
 
--- Avante setup
-require("avante").setup({
-  provider = "claude",
-  providers = {
-    claude = {
-      endpoint = "https://api.anthropic.com",
-      model = "claude-sonnet-4-20250514",
-      timeout = 30000,
-      extra_request_body = {
-        temperature = 0.75,
-        max_tokens = 20480,
-      },
-    },
-  },
-})
-
-vim.api.nvim_set_keymap('n', '<C-n>', ':NvimTreeToggle<CR>', { noremap = true, silent = true })
-
 -- Setup for jsx
 vim.g.jsx_ext_required = 0
-
--- Setup for Neomake
-vim.g.neomake_python_enabled_makers = {'flake8'}
 
 -- Keybindings
 local opts = { noremap = true, silent = true }
@@ -624,9 +416,6 @@ vim.api.nvim_set_keymap('n', '<leader><C-f>', ':lua vim.lsp.buf.format({ async =
 vim.api.nvim_set_keymap('n', '<leader>n', ':lnext<CR>', opts)  -- Next diagnostic
 vim.api.nvim_set_keymap('n', '<leader>m', ':lprev<CR>', opts)  -- Previous diagnostic
 
--- Linting and checking
-vim.api.nvim_set_keymap('n', '<leader>sc', ':Neomake<CR>', opts)  -- Run syntax check
-
 -- File tree
 vim.api.nvim_set_keymap('n', '<C-n>', ':NvimTreeToggle<CR>', opts)  -- Toggle file tree
 
@@ -644,6 +433,7 @@ vim.api.nvim_set_keymap('n', '<C-n>', ':NvimTreeToggle<CR>', opts)  -- Toggle fi
 
 
 -- Terraform settings
+-- Terraform filetype detection
 vim.cmd [[
     autocmd BufRead,BufNewFile *.tf set filetype=hcl
     autocmd BufRead,BufNewFile *.hcl set filetype=hcl
@@ -651,9 +441,6 @@ vim.cmd [[
     autocmd BufRead,BufNewFile *.tf,*.tfvars set filetype=terraform
     autocmd BufRead,BufNewFile *.tfstate,*.tfstate.backup set filetype=json
 ]]
-
-vim.g.terraform_fmt_on_save = 1
-vim.g.terraform_align = 1
 
 -- Terraform keybindings
 vim.api.nvim_set_keymap('n', '<leader>ti', ':!terraform init<CR>', opts)  -- Terraform init
