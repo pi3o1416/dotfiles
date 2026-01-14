@@ -215,12 +215,12 @@ require("mason-lspconfig").setup({
 })
 
 require("mason-nvim-dap").setup({
-    ensure_installed = { "python" },
+    ensure_installed = { "pylint", "python" },
     automatic_installation = true,
 })
 
 require("mason-nvim-lint").setup({
-    ensure_installed = { },
+    ensure_installed = { "eslint_d" },
     automatic_installation = true,
 })
 
@@ -405,7 +405,12 @@ lspconfig.yamlls.setup {
 
 -- Set up linter
 require('lint').linters_by_ft = {
-  python = {'pylint'}
+  python = {'pylint'},
+  javascript = {'eslint_d'},
+  typescript = {'eslint_d'},
+  javascriptreact = {'eslint_d'},
+  typescriptreact = {'eslint_d'},
+  vue = {'eslint_d'}
 }
 
 -- Set running linters on buffer save
