@@ -1,5 +1,8 @@
-return function(lspconfig, capabilities)
-  lspconfig.rust_analyzer.setup {
+return function(capabilities)
+  return {
+    cmd = { 'rust-analyzer' },
+    filetypes = { 'rust' },
+    root_markers = { 'Cargo.toml', 'rust-project.json', '.git' },
     capabilities = capabilities,
     settings = {
       ["rust-analyzer"] = {

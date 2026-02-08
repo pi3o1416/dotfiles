@@ -23,8 +23,6 @@ require("lazy").setup({
 
   -- LSP and language support
   "mason-org/mason.nvim",
-  "mason-org/mason-lspconfig.nvim",
-  "neovim/nvim-lspconfig",
   "ray-x/lsp_signature.nvim",
 
   -- Formatting and diagnostics
@@ -171,10 +169,6 @@ require("mason").setup({
         },
     }
 })
-require("mason-lspconfig").setup({
-    ensure_installed = { "lua_ls", "pyright", "ts_ls"},
-    automatic_installation = true,
-})
 
 require("mason-nvim-dap").setup({
     ensure_installed = { "pylint", "python" },
@@ -227,8 +221,7 @@ cmp.setup.cmdline(':', {
   matching = { disallow_symbol_nonprefix_matching = false }
 })
 
--- Set up LSP configuration
-local lspconfig = require("lspconfig")
+-- Set up LSP configuration using native vim.lsp API
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
 -- Add config directory to Lua path
@@ -250,8 +243,10 @@ local lsp_servers = {
 }
 
 for _, server in ipairs(lsp_servers) do
-  local config = require('lsp.' .. server)
-  config(lspconfig, capabilities)
+  local config_fn = require('lsp.' .. server)
+  local config = config_fn(capabilities)
+  vim.lsp.config(server, config)
+  vim.lsp.enable(server)
 end
 
 -- Set up linter

@@ -1,5 +1,8 @@
-return function(lspconfig, capabilities)
-  lspconfig.lua_ls.setup {
+return function(capabilities)
+  return {
+    cmd = { 'lua-language-server' },
+    filetypes = { 'lua' },
+    root_markers = { '.luarc.json', '.luarc.jsonc', '.luacheckrc', '.stylua.toml', 'stylua.toml', 'selene.toml', 'selene.yml', '.git' },
     capabilities = capabilities,
     settings = {
       Lua = {
@@ -18,12 +21,5 @@ return function(lspconfig, capabilities)
         hint = { enable = true },
       },
     },
-    root_dir = function(fname)
-      return require("lspconfig.util").root_pattern(
-        ".luarc.json", ".luarc.jsonc", ".luacheckrc",
-        ".stylua.toml", "stylua.toml", "selene.toml",
-        "selene.yml", ".git"
-      )(fname)
-    end,
   }
 end
