@@ -2,7 +2,9 @@ return function(capabilities)
   return {
     cmd = { 'yaml-language-server', '--stdio' },
     filetypes = { 'yaml', 'yaml.docker-compose' },
-    root_markers = { '.git' },
+    root_dir = function(filename)
+      return vim.fs.root(filename, { '.git' }) or vim.fn.fnamemodify(filename, ':h')
+    end,
     capabilities = capabilities,
     settings = {
       yaml = {

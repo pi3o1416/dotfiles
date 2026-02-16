@@ -127,6 +127,7 @@ vim.opt.relativenumber = true
 vim.opt.cursorline = true
 vim.opt.guicursor = ""
 vim.opt.termguicolors = true
+vim.opt.updatetime = 500  -- Faster CursorHold trigger (500ms)
 
 -- Indentation settings
 vim.opt.shiftwidth = 2
@@ -143,6 +144,9 @@ vim.cmd [[
     autocmd FileType markdown setlocal ts=2 sw=2 expandtab
     autocmd FileType python setlocal ts=4 sw=4 sts=0 expandtab
 ]]
+
+-- Add Mason bin directory to PATH
+vim.env.PATH = vim.fn.stdpath("data") .. "/mason/bin:" .. vim.env.PATH
 
 -- Mason setup with improved UI
 require("mason").setup({
@@ -221,14 +225,14 @@ cmp.setup.cmdline(':', {
   matching = { disallow_symbol_nonprefix_matching = false }
 })
 
--- Set up LSP configuration using native vim.lsp API
+-- Set up LSP configuration
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
 -- Add config directory to Lua path
 local config_dir = vim.fn.stdpath("config")
 package.path = package.path .. ";" .. config_dir .. "/?.lua"
 
--- Load LSP configs from separate files
+-- LSP servers to load
 local lsp_servers = {
   'pyright',
   'gopls',
@@ -242,11 +246,35 @@ local lsp_servers = {
   'yamlls'
 }
 
+-- Setup all LSP servers
 for _, server in ipairs(lsp_servers) do
   local config_fn = require('lsp.' .. server)
   local config = config_fn(capabilities)
-  vim.lsp.config(server, config)
-  vim.lsp.enable(server)
+
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = config.filetypes,
+    callback = function(args)
+      local bufnr = args.buf
+      local filename = vim.api.nvim_buf_get_name(bufnr)
+
+      -- Skip if buffer already has this LSP client
+      if #vim.lsp.get_clients({ bufnr = bufnr, name = server }) > 0 then
+        return
+      end
+
+      local root = config.root_dir(filename)
+      if root then
+        vim.lsp.start({
+          name = server,
+          cmd = config.cmd,
+          root_dir = root,
+          capabilities = config.capabilities,
+          settings = config.settings,
+          init_options = config.init_options,
+        }, { bufnr = bufnr })
+      end
+    end,
+  })
 end
 
 -- Set up linter
@@ -410,6 +438,8 @@ vim.api.nvim_set_keymap('n', '<leader>sv', ':source $MYVIMRC<CR>', opts)  -- Rel
 vim.api.nvim_set_keymap('n', '<leader><C-f>', ':lua vim.lsp.buf.format({ async = true })<CR>', opts)  -- Format code
 vim.api.nvim_set_keymap('n', '<leader>n', ':lnext<CR>', opts)  -- Next diagnostic
 vim.api.nvim_set_keymap('n', '<leader>m', ':lprev<CR>', opts)  -- Previous diagnostic
+vim.api.nvim_set_keymap('n', 'K', ':lua vim.lsp.buf.hover()<CR>', opts)  -- Show LSP hover documentation
+vim.api.nvim_set_keymap('n', '<leader>d', ':lua vim.diagnostic.open_float()<CR>', opts)  -- Show diagnostics
 
 -- File tree
 vim.api.nvim_set_keymap('n', '<C-n>', ':NvimTreeToggle<CR>', opts)  -- Toggle file tree
